@@ -5,6 +5,7 @@ import SocketServer
 import sys
 from hashlib import sha256
 import socket
+from etl import ETL
 
 logging.getLogger().setLevel(logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
@@ -15,7 +16,7 @@ logging.getLogger().addHandler(ch)
 
 
 KNOWN_HOSTS = {}
-GROK_FRONTEND = None
+ETL_FRONTEND = None
 MONGO_CON = None
 
 
@@ -31,15 +32,15 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
         7: "DEBUG",
     }
     MONGO_CON = None
-    GROK_FRONTEND = None
+    ETL_FRONTEND = None
 
     @classmethod
     def set_mongo_backend(cls, mongo_backend):
         cls.MONGO_CON = mongo_backend
 
     @classmethod
-    def set_grok_frontend(cls, grok_frontend):
-        cls.GROK_FRONTEND = grok_frontend
+    def etl_frontend(cls, etl_frontend):
+        cls.ETL_FRONTEND = etl_frontend
 
     def resolve_host(self, ip):
         if ip in KNOWN_HOSTS:
@@ -88,30 +89,12 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
         t, msg = self.split_alert_message(syslog_msg)
         sm['raw'] = msg
         sm['msg_tag'] = t
-        results = {}
-        # TODO the results {} needs to access the correct rvalue, now its just wrong
+        result = {}
         try:
-            results = GROK_FRONTEND.execute_dispatch_tables(syslog_msg)
+            result = self.ETL_FRONTEND.syslog_et(syslog_msg)
         except:
             pass
 
-        if results is None or len(results) == 0:
-            results = GROK_FRONTEND.runall_grok_patterns_match_text(syslog_msg)
-        max_sz = 0
-        _r = {}
-        for name, result in grok_results.items():
-            if result is None or len(result) == 0:
-                continue
-            result['patterns'] = [name]
-            if len(result) > max_sz:
-                _r = result
-            elif len(result) == max_sz:
-                print _r
-                _patterns = _r['patterns']
-                _patterns.append(name)
-                _r.update(result)
-                _r['patterns'] = _patterns
-        result = _r
         result.update(sm)
         return result
 

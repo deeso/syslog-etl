@@ -12,7 +12,7 @@ SYSLOG_DISPATCH = 'syslog_dispatcher'
 class ETL(object):
 
     @classmethod
-    def build_grokit(cls, config=DEFAULT_CONFIG, names=DEFAULT_NAMES,
+    def build_grok_etl(cls, config=DEFAULT_CONFIG, names=DEFAULT_NAMES,
                      custom_patterns=DEFAULT_PATTERNS):
         gfe = GrokFrontend(config=config, custom_patterns_dir=custom_patterns,
                             patterns_names=names)
@@ -36,4 +36,4 @@ class ETL(object):
         fe_results = my_fe.execute_dispatch_table(SYSLOG_DISPATCH, syslog_msg)
         if fe_results['outcome']:
             return fe_results['rule_results']
-        return None
+        return {}

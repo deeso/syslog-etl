@@ -1,5 +1,4 @@
-from rule_chains import get_names, get_patterns, get_grokit_config
-from rule_chains.frontend import GrokFrontend
+from syslog_etl_svc.etl import ETL, DEFAULT_NAMES, DEFAULT_PATTERNS, DEFAULT_CONFIG
 import logging
 import argparse
 
@@ -22,11 +21,11 @@ parser.add_argument('-shost', type=str, default='',
 parser.add_argument('-sport', type=int, default=5001,
                     help='syslog listener port (udp)')
 
-parser.add_argument('-cpdir', type=str, default=get_patterns(),
+parser.add_argument('-cpdir', type=str, default=DEFAULT_PATTERNS,
                     help='directory containing custom grok patterns directory')
-parser.add_argument('-names', type=str, default=get_names(),
+parser.add_argument('-names', type=str, default=DEFAULT_NAMES,
                     help='file containing all the names for rule patterns')
-parser.add_argument('-gconfig', type=str, default=get_grokit_config(),
+parser.add_argument('-gconfig', type=str, default=DEFAULT_CONFIG,
                     help='Grok frontend configuration for rule chains')
 
 parser.add_argument('-known_hosts', type=str, default=None,
@@ -58,14 +57,14 @@ def setup_grokker(parser_args):
     patterns_dir = parser_args.cpdir
     config = parser_args.gconfig
     names = parser_args.names
-    logging.debug("Loading grok rules")
-    gr = GrokFrontend(  # default chains configuration
+    logging.debug("Loading Grok ETL")
+    gr = ETL.create_global_gfe(  # default chains configuration
                       config=config,
                       # patterns created for pfsense filterlog and openvpn
                       custom_patterns_dir=patterns_dir,
                       # patterns to load individual groks for
                       patterns_names=names)
-    logging.debug("Loading grok rules completed")
+    logging.debug("Loading Grok ETL completed")
     return gr
 
 if __name__ == "__main__":
@@ -73,10 +72,10 @@ if __name__ == "__main__":
     mongo_backend = MongoConnection(args.mhost, args.mport,
                                     args.muser, args.mpass,
                                     args.mdb)
-    grok_frontend = setup_grokker(args)
+    etl_frontend = setup_grokker(args)
     setup_known_hosts(args)
     SyslogUDPHandler.set_mongo_backend(mongo_backend)
-    SyslogUDPHandler.set_grok_frontend(grok_frontend)
+    SyslogUDPHandler.etl_frontend(etl_frontend)
     try:
         logging.debug("Starting the syslog listener")
         server = SocketServer.UDPServer(
