@@ -1,4 +1,5 @@
 from syslog_svc.etl import ETL, DEFAULT_NAMES, DEFAULT_PATTERNS, DEFAULT_CONFIG
+from syslog_svc.mongo_backend import MongoConnection
 import logging
 import argparse
 import sys
