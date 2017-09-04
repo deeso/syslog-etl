@@ -1,6 +1,7 @@
 from syslog_svc.etl import ETL, DEFAULT_NAMES, DEFAULT_PATTERNS, DEFAULT_CONFIG
 import logging
 import argparse
+import sys
 
 
 parser = argparse.ArgumentParser(description='Start syslog-grok-mongo captures.')
