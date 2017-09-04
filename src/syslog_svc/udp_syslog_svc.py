@@ -35,6 +35,15 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
     ETL_FRONTEND = None
 
     @classmethod
+    def get_server(cls, shost, sport):
+        try:
+            logging.debug("starting the syslog listener")
+            server = SocketServer.UDPServer((shost, sport), cls)
+            return server
+        except:
+            raise
+
+    @classmethod
     def set_mongo_backend(cls, mongo_backend):
         cls.MONGO_CON = mongo_backend
 
@@ -91,9 +100,9 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
         sm['msg_tag'] = t
         result = {}
         try:
-            result = self.ETL_FRONTEND.syslog_et(syslog_msg)
+            result = ETL.syslog_et(syslog_msg)
         except:
-            pass
+            raise
 
         result.update(sm)
         return result
@@ -113,6 +122,6 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
         if inserted:
             logging.info('Inserted into the raw collection:'+msg_type+':'+str(data))
         if inserted2:
-            logging.info('Inserted into the json collection:'+msg_type+':'+str(data))
+            logging.info('Inserted into the json collection:'+msg_type+':'+str(json_data))
 
 

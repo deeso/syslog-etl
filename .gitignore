@@ -5,3 +5,5 @@ build*
 dist*
 ./src/.*egg-info.*
 src/rule_chains.egg-info
+hosts.txt
+src/syslog_svc_etl.egg-info

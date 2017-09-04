@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: syslog-svc-etl
+Version: 1.0
+Summary: syslog etl that converts syslog messages using grok and saves them to mongo
+Home-page: UNKNOWN
+Author: adam pridgen
+Author-email: dso@thecoverofnight.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN

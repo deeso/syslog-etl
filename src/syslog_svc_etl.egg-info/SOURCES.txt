@@ -1,0 +1,10 @@
+setup.py
+src/syslog_svc/__init__.py
+src/syslog_svc/etl.py
+src/syslog_svc/mongo_backend.py
+src/syslog_svc/udp_syslog_svc.py
+src/syslog_svc_etl.egg-info/PKG-INFO
+src/syslog_svc_etl.egg-info/SOURCES.txt
+src/syslog_svc_etl.egg-info/dependency_links.txt
+src/syslog_svc_etl.egg-info/requires.txt
+src/syslog_svc_etl.egg-info/top_level.txt

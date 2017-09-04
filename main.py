@@ -81,8 +81,7 @@ if __name__ == "__main__":
     SyslogUDPHandler.etl_frontend(etl_frontend)
     try:
         logging.debug("Starting the syslog listener")
-        server = SocketServer.UDPServer(
-                  (args.shost, args.sport), SyslogUDPHandler)
+        server = SyslogUDPHandler.get_server(args.shost, args.sport)
         server.serve_forever(poll_interval=0.5)
     except (IOError, SystemExit):
         raise
