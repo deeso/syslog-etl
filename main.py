@@ -63,7 +63,7 @@ def setup_grokker(parser_args):
     gr = ETL.create_global_gfe(  # default chains configuration
                       config=config,
                       # patterns created for pfsense filterlog and openvpn
-                      custom_patterns_dir=patterns_dir,
+                      custom_patterns=patterns_dir,
                       # patterns to load individual groks for
                       patterns_names=names)
     logging.debug("Loading Grok ETL completed")
