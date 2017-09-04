@@ -1,6 +1,6 @@
 from syslog_svc.etl import ETL, DEFAULT_NAMES, DEFAULT_PATTERNS, DEFAULT_CONFIG
 from syslog_svc.mongo_backend import MongoConnection
-from syslog_svc.udp_syslog_svc import KNOWN_HOSTS
+from syslog_svc.udp_syslog_svc import KNOWN_HOSTS, SyslogUDPHandler
 import logging
 import argparse
 import sys
