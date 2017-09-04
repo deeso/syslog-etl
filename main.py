@@ -65,7 +65,7 @@ def setup_grokker(parser_args):
                       # patterns created for pfsense filterlog and openvpn
                       custom_patterns=patterns_dir,
                       # patterns to load individual groks for
-                      patterns_names=names)
+                      names=names)
     logging.debug("Loading Grok ETL completed")
     return gr
 
