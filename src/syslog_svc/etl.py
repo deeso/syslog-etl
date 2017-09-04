@@ -22,7 +22,7 @@ class ETL(object):
     def create_global_gfe(cls, config=DEFAULT_CONFIG, names=DEFAULT_NAMES,
                      custom_patterns=DEFAULT_PATTERNS):
         global GROK_FE
-        GROK_FE = cls.build_grokit(config=config, names=name,
+        GROK_FE = cls.build_grok_etl(config=config, names=name,
                                    custom_patterns=custom_patterns)
         return GROK_FE
 
