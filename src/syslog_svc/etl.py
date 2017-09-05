@@ -2,6 +2,13 @@ from rule_chains.frontend import GrokFrontend
 from rule_chains import get_names, get_patterns, get_grokit_config
 
 
+LOG_STASH_HOST = '10.18.120.13'
+LOG_STASH_PORT = '5001'
+LOG_STASH_PROTO = 'UDP'
+LOG_STASH_SOCK = None
+
+
+
 DEFAULT_NAMES = get_names()
 DEFAULT_PATTERNS = get_patterns()
 GROK_FE = None
@@ -10,6 +17,40 @@ SYSLOG_DISPATCH = 'syslog_dispatcher'
 
 
 class ETL(object):
+    
+
+    @classmethod
+    def get_logstash_server(cls):
+        global LOG_STASH_HOST, LOG_STASH_PORT
+        return (LOG_STASH_HOST, LOG_STASH_PORT)
+
+    @classmethod
+    def get_logstash_sock(cls, force_reconnect=False):
+        global LOG_STASH_PROTO, LOG_STASH_PORT, LOG_STASH_HOST, LOG_STASH_SOCK
+        sock = None
+        if LOG_STASH_SOCK is not None and not force_reconnect:
+            return LOG_STASH_SOCK
+        if LOG_STASH_PROTO.lower() == 'tcp':
+            sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(cls.get_logstash_server())
+        elif LOG_STASH_PROTO.lower() == 'udp':
+            sock =  socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        else:
+            raise Exception("Unknown protocol %s"%LOG_STASH_PROTO)
+        LOG_STASH_SOCK = sock
+        return sock
+
+    @classmethod
+    def send_msg(cls, message):
+        global LOG_STASH_PROTO
+        conn = cls.get_logstash_sock()
+        server = cls.get_logstash_server()
+        if LOG_STASH_PROTO.lower() == 'udp':
+            conn.sendto(message, server)
+        elif LOG_STASH_PROTO.lower() == 'tcp':
+            conn.send(message)
+        else:
+            raise Exception("Unknown protocol %s"%LOG_STASH_PROTO)
 
     @classmethod
     def build_grok_etl(cls, config=DEFAULT_CONFIG, names=DEFAULT_NAMES,
