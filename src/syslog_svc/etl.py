@@ -76,13 +76,25 @@ class ETL(object):
         return GROK_FE
 
     @classmethod
-    def syslog_et(cls, syslog_msg):
+    def syslog_et(cls, syslog_msg, exclude_results=['SYSLOG_PRE', 'SYSLOG_PRE_MSG']):
         global GROK_FE
         my_fe = GROK_FE
         if my_fe is None:
             my_fe = cls.build_grokit()
         # 'syslog_app_dispatch'
-        fe_results = my_fe.execute_dispatch_table(SYSLOG_DISPATCH, syslog_msg)
-        if fe_results['outcome']:
-            return fe_results['rule_results']
+        try:
+            fe_results = my_fe.execute_dispatch_table(SYSLOG_DISPATCH, syslog_msg)
+            if fe_results['outcome']:
+                return fe_results['rule_results']
+        except:
+            pass
+
+        fe_results = my_fe.match_runall_patterns(syslog_msg)
+        print fe_results
+        for n,v in fe_results.items():
+            if n in exclude_results:
+                continue
+            if v is not None and 'rule_results' in v and \
+               len(v['rule_results']) > 0:
+                return v
         return {}

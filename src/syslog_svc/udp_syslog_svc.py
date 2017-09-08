@@ -143,6 +143,10 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
             result = ETL.syslog_et(syslog_msg)
             #sm['@fields'].update(result)
             sm.update(result.get('rule_results', result))
+            if 'rule_name' in result:
+                sm['rule_name'] = result.get('rule_name')
+
+            sm.update(result.get('rule_results', result))
             #r.update(sm)
         except:
             pass
