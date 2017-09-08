@@ -49,6 +49,7 @@ class MongoConnection(object):
         conn = MongoClient(self.uri)
         db = conn[self.db_name]
         col = db[self.JSON_COLLECTION]
+        failed_check = True
         if check_id and '_id' in json_data:
             failed_check = not self.has_obj(col, {'_id': json_data['_id']})
 

@@ -3,9 +3,18 @@
 import logging
 import SocketServer
 import sys
+import json
 from hashlib import sha256
 import socket
+from datetime import datetime
 from etl import ETL
+import logstash
+import pytz
+
+TZ_ASCII = 'America/Chicago'
+MY_TZ = pytz.timezone(TZ_ASCII)
+
+
 
 logging.getLogger().setLevel(logging.DEBUG)
 ch = logging.StreamHandler(sys.stdout)
@@ -13,6 +22,15 @@ ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logging.getLogger().addHandler(ch)
+
+import sys
+
+host = 'localhost'
+
+test_logger = logging.getLogger('python-logstash-logger')
+test_logger.setLevel(logging.INFO)
+etl_host, etl_port = ETL.get_logstash_server() 
+test_logger.addHandler(logstash.LogstashHandler(etl_host, etl_port, version=1))
 
 
 KNOWN_HOSTS = {}
@@ -91,21 +109,46 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
             v &= 0x7
         return self.SYSLOG_MSG_TYPE[v]
 
+    def format_timestamp(self, tstamp):
+        global MY_TZ
+        local_tz = MY_TZ.localize(tstamp, is_dst=None)
+        utc_tz = local_tz.astimezone(pytz.utc)
+        return utc_tz.strftime("%Y-%m-%dT%H:%M:%S") + ".%03d" % (tstamp.microsecond / 1000) + "Z" 
+
+    def send_to_logstash(self, json_data):
+        global test_logger
+        test_logger.info('python-logstash', extra=json_data)
+
     def create_json(self, syslog_msg):
-        sm = {'log_type': "syslog", 'raw': '',
-              '_id': sha256(syslog_msg).hexdigest()}
-        sm['msg_tag_text'] = self.calculate_msg_type(syslog_msg)
+        r = {'source': "syslog", 'raw': syslog_msg, 
+              'type':'json',
+              '_id': sha256(syslog_msg).hexdigest(),
+              '@timestamp': self.format_timestamp(datetime.now()),
+              '@version': "1",
+              'message': "transformed syslog",
+              'path': '',
+              'tags': [],
+              #'@fields': {
+              #  #'levelname': record.levelname,
+              #  #'logger': record.name,
+              #},
+              }
         t, msg = self.split_alert_message(syslog_msg)
-        sm['raw'] = msg
-        sm['msg_tag'] = t
-        result = {}
+        sm = {}
+        sm['raw'] = syslog_msg
+        sm['syslog_level'] = self.calculate_msg_type(syslog_msg)
+        sm['syslog_msg'] = msg
+        sm['syslog_tag'] = t
         try:
             result = ETL.syslog_et(syslog_msg)
+            #sm['@fields'].update(result)
+            sm.update(result.get('rule_results', result))
+            #r.update(sm)
         except:
-            raise
-
-        result.update(sm)
-        return result
+            pass
+        #r['message'] = sm
+        r.update(sm)
+        return r
 
     def handle(self):
         logging.debug("Handling syslog message")
@@ -118,10 +161,15 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
         json_data = self.create_json(data)
         inserted, result = self.MONGO_CON.insert_raw(data)
         inserted2, result = self.MONGO_CON.insert_json(json_data)
+        del json_data['_id']
+        inserted3, ls = ETL.send_msg(json.dumps(json_data)+'\n')
+        #inserted3 = self.send_to_logstash(json_data)
         msg_type = self.calculate_msg_type(data)
         if inserted:
             logging.info('Inserted into the raw collection:'+msg_type+':'+str(data))
         if inserted2:
             logging.info('Inserted into the json collection:'+msg_type+':'+str(json_data))
+        if inserted3:
+            logging.info('Inserted into the ELF instance')
 
 

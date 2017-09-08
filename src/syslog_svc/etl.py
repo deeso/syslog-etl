@@ -1,9 +1,9 @@
 from rule_chains.frontend import GrokFrontend
 from rule_chains import get_names, get_patterns, get_grokit_config
-
+import socket
 
 LOG_STASH_HOST = '10.18.120.13'
-LOG_STASH_PORT = '5001'
+LOG_STASH_PORT = 5002
 LOG_STASH_PROTO = 'UDP'
 LOG_STASH_SOCK = None
 
@@ -46,9 +46,17 @@ class ETL(object):
         conn = cls.get_logstash_sock()
         server = cls.get_logstash_server()
         if LOG_STASH_PROTO.lower() == 'udp':
-            conn.sendto(message, server)
+            try:
+                l = conn.sendto(message, server)
+                return True, l
+            except Exception as e:
+                raise e
         elif LOG_STASH_PROTO.lower() == 'tcp':
-            conn.send(message)
+            try:
+                l = conn.send(message)
+                return True, l
+            except Exception as e:
+                raise e
         else:
             raise Exception("Unknown protocol %s"%LOG_STASH_PROTO)
 
