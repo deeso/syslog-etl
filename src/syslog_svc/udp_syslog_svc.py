@@ -8,7 +8,7 @@ from hashlib import sha256
 import socket
 from datetime import datetime
 from etl import ETL
-import logstash
+# import logstash
 import pytz
 
 TZ_ASCII = 'America/Chicago'
@@ -27,10 +27,7 @@ import sys
 
 host = 'localhost'
 
-test_logger = logging.getLogger('python-logstash-logger')
-test_logger.setLevel(logging.INFO)
-etl_host, etl_port = ETL.get_logstash_server() 
-test_logger.addHandler(logstash.LogstashHandler(etl_host, etl_port, version=1))
+test_logger = None
 
 
 KNOWN_HOSTS = {}
@@ -117,6 +114,17 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
 
     def send_to_logstash(self, json_data):
         global test_logger
+        if test_logger is None:
+            try:
+                import logstash
+                test_logger = logging.getLogger('python-logstash-logger')
+                test_logger.setLevel(logging.INFO)
+                etl_host, etl_port = ETL.get_logstash_server()
+                test_logger.addHandler(logstash.LogstashHandler(etl_host,
+                                                                etl_port,
+                                                                version=1))
+            except:
+                raise
         test_logger.info('python-logstash', extra=json_data)
 
     def create_json(self, syslog_msg):

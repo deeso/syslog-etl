@@ -56,26 +56,12 @@ def setup_known_hosts(parser_args):
         logging.debug("Loading known hosts completed")
 
 
-def setup_grokker(parser_args):
-    patterns_dir = parser_args.cpdir
-    config = parser_args.gconfig
-    names = parser_args.names
-    logging.debug("Loading Grok ETL")
-    gr = ETL.create_global_gfe(  # default chains configuration
-                      config=config,
-                      # patterns created for pfsense filterlog and openvpn
-                      custom_patterns=patterns_dir,
-                      # patterns to load individual groks for
-                      names=names)
-    logging.debug("Loading Grok ETL completed")
-    return gr
-
 if __name__ == "__main__":
     args = parser.parse_args()
     mongo_backend = MongoConnection(args.mhost, args.mport,
                                     args.muser, args.mpass,
                                     args.mdb)
-    etl_frontend = setup_grokker(args)
+    etl_frontend = ETL.setup_grokker(args)
     setup_known_hosts(args)
     SyslogUDPHandler.set_mongo_backend(mongo_backend)
     SyslogUDPHandler.etl_frontend(etl_frontend)

@@ -1,6 +1,7 @@
 from rule_chains.frontend import GrokFrontend
 from rule_chains import get_names, get_patterns, get_grokit_config
 import socket
+import logging
 
 LOG_STASH_HOST = '10.18.120.13'
 LOG_STASH_PORT = 5002
@@ -17,7 +18,21 @@ SYSLOG_DISPATCH = 'syslog_dispatcher'
 
 
 class ETL(object):
-    
+
+    @classmethod
+    def setup_grokker(cls, parser_args):
+        patterns_dir = parser_args.cpdir
+        config = parser_args.gconfig
+        names = parser_args.names
+        logging.debug("Loading Grok ETL")
+        gr = cls.create_global_gfe(  # default chains configuration
+                          config=config,
+                          # patterns created for pfsense filterlog and openvpn
+                          custom_patterns=patterns_dir,
+                          # patterns to load individual groks for
+                          names=names)
+        logging.debug("Loading Grok ETL completed")
+        return gr
 
     @classmethod
     def get_logstash_server(cls):
