@@ -156,6 +156,15 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
 
             sm.update(result.get('rule_results', result))
             #r.update(sm)
+            sm['tags'] = []  
+            if sm.get('syslog_server', None) is None:
+                host = self.resolve_host(self.client_address[0])
+                sm['syslog_server'] = host
+            if sm.get('syslog_level', None) is not None:
+                sm['tags'].append(sm['syslog_level'])
+            if sm.get('rule_name', None) is not None:
+                sm['tags'].append(sm['rule_name'])
+
         except:
             pass
         #r['message'] = sm
@@ -168,7 +177,7 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
         logging.debug("Resolving syslog message source")
         host = self.resolve_host(self.client_address[0])
         logging.debug("Mutating syslog message with source")
-        data = self.insert_syslog_host(data,  host)
+        #data = self.insert_syslog_host(data,  host)
         logging.info(str(data))
         json_data = self.create_json(data)
         inserted, result = self.MONGO_CON.insert_raw(data)
