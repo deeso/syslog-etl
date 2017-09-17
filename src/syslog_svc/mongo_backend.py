@@ -11,9 +11,10 @@ class MongoConnection(object):
     FMT_UP = "mongodb://{username}:{password}@{host}:{port}"
     FMT_NUP = "mongodb://{host}:{port}"
 
-    def __init__(self, host, port, user=None, password=None, db_name=None):
+    def __init__(self, host, port, user=None, password=None, db_name=None, save=True):
         self.host = host
         self.port = port
+        self.save = save
         self.password = None
         if password is not None:
             self.password = urllib.quote_plus(password)
@@ -30,6 +31,8 @@ class MongoConnection(object):
         return len(x) > 0
 
     def insert_raw(self, syslog_msg, check_id=True):
+        if not self.save:
+            return False, None
         sm = {'message_source': 'syslog',
               'message': syslog_msg, 'raw': syslog_msg,
               '_id': sha256(syslog_msg).hexdigest()}
@@ -46,6 +49,8 @@ class MongoConnection(object):
         return True, col.insert_one(sm).inserted_id
 
     def insert_json(self, json_data, check_id=True):
+        if not self.save:
+            return False, None
         conn = MongoClient(self.uri)
         db = conn[self.db_name]
         col = db[self.JSON_COLLECTION]

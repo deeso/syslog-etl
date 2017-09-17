@@ -8,6 +8,8 @@ import sys
 
 parser = argparse.ArgumentParser(description='Start syslog-grok-mongo captures.')
 
+parser.add_argument('-msave', default=False, action='store_true',
+                    help='mongo save to mongo db')
 parser.add_argument('-mhost', type=str, default='',
                     help='mongo host address or name')
 parser.add_argument('-mport', type=int, default=27017,
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     mongo_backend = MongoConnection(args.mhost, args.mport,
                                     args.muser, args.mpass,
-                                    args.mdb)
+                                    args.mdb, args.msave)
     etl_frontend = ETL.setup_grokker(args)
     setup_known_hosts(args)
     SyslogUDPHandler.set_mongo_backend(mongo_backend)
