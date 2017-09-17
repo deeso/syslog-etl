@@ -28,7 +28,7 @@ parser.add_argument('-lhost', type=str, default='',
                     help='etl data destination host')
 parser.add_argument('-lport', type=int, default=5002,
                     help='etl data destination port')
-parser.add_argument('-lproto', type=int, default='udp',
+parser.add_argument('-lproto', type=str, default='udp',
                     help='etl data socket proto')
 
 parser.add_argument('-cpdir', type=str, default=DEFAULT_PATTERNS,
