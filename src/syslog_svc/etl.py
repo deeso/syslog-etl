@@ -3,10 +3,10 @@ from rule_chains import get_names, get_patterns, get_grokit_config
 import socket
 import logging
 
-LOG_STASH_HOST = '10.18.120.13'
-LOG_STASH_PORT = 5002
-LOG_STASH_PROTO = 'UDP'
-LOG_STASH_SOCK = None
+ETL_DEST_HOST = '10.18.120.13'
+ETL_DEST_PORT = 5002
+ETL_DEST_PROTO = 'UDP'
+ETL_DEST_SOCK = None
 
 
 
@@ -21,9 +21,13 @@ class ETL(object):
 
     @classmethod
     def setup_grokker(cls, parser_args):
+        global ETL_DEST_PROTO, ETL_DEST_HOST, ETL_DEST_PORT
         patterns_dir = parser_args.cpdir
         config = parser_args.gconfig
         names = parser_args.names
+        ETL_DEST_PROTO = getattr(parser_args, 'lproto', ETL_DEST_PROTO)
+        ETL_DEST_HOST = getattr(parser_args, 'lhost', ETL_DEST_HOST)
+        ETL_DEST_PORT = getattr(parser_args, 'lport', ETL_DEST_PORT)
         logging.debug("Loading Grok ETL")
         gr = cls.create_global_gfe(  # default chains configuration
                           config=config,
@@ -36,44 +40,44 @@ class ETL(object):
 
     @classmethod
     def get_logstash_server(cls):
-        global LOG_STASH_HOST, LOG_STASH_PORT
-        return (LOG_STASH_HOST, LOG_STASH_PORT)
+        global ETL_DEST_HOST, ETL_DEST_PORT
+        return (ETL_DEST_HOST, ETL_DEST_PORT)
 
     @classmethod
     def get_logstash_sock(cls, force_reconnect=False):
-        global LOG_STASH_PROTO, LOG_STASH_PORT, LOG_STASH_HOST, LOG_STASH_SOCK
+        global ETL_DEST_PROTO, ETL_DEST_PORT, ETL_DEST_HOST, ETL_DEST_SOCK
         sock = None
-        if LOG_STASH_SOCK is not None and not force_reconnect:
-            return LOG_STASH_SOCK
-        if LOG_STASH_PROTO.lower() == 'tcp':
+        if ETL_DEST_SOCK is not None and not force_reconnect:
+            return ETL_DEST_SOCK
+        if ETL_DEST_PROTO.lower() == 'tcp':
             sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(cls.get_logstash_server())
-        elif LOG_STASH_PROTO.lower() == 'udp':
+        elif ETL_DEST_PROTO.lower() == 'udp':
             sock =  socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         else:
-            raise Exception("Unknown protocol %s"%LOG_STASH_PROTO)
-        LOG_STASH_SOCK = sock
+            raise Exception("Unknown protocol %s"%ETL_DEST_PROTO)
+        ETL_DEST_SOCK = sock
         return sock
 
     @classmethod
     def send_msg(cls, message):
-        global LOG_STASH_PROTO
+        global ETL_DEST_PROTO
         conn = cls.get_logstash_sock()
         server = cls.get_logstash_server()
-        if LOG_STASH_PROTO.lower() == 'udp':
+        if ETL_DEST_PROTO.lower() == 'udp':
             try:
                 l = conn.sendto(message, server)
                 return True, l
             except Exception as e:
                 raise e
-        elif LOG_STASH_PROTO.lower() == 'tcp':
+        elif ETL_DEST_PROTO.lower() == 'tcp':
             try:
                 l = conn.send(message)
                 return True, l
             except Exception as e:
                 raise e
         else:
-            raise Exception("Unknown protocol %s"%LOG_STASH_PROTO)
+            raise Exception("Unknown protocol %s"%ETL_DEST_PROTO)
 
     @classmethod
     def build_grok_etl(cls, config=DEFAULT_CONFIG, names=DEFAULT_NAMES,
